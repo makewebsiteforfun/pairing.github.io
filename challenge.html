@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food and Drink Pairing Game</title>
+    <style>
+       body {
+    background-image: url('./food-pairing-help.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.container {
+    text-align: center;
+}
+
+.input-section {
+    margin-bottom: 20px;
+}
+
+#foodOptions,
+#drinkOptions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.option {
+    margin: 0 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.option:hover {
+    transform: scale(1.1);
+}
+
+.option.selected {
+    border: 2px solid yellow;
+}
+
+.option img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
+
+#pairButton {
+    margin-top: 20px;
+}
+
+#pairedItems {
+    margin-top: 20px;
+}
+
+#pairedItems img {
+    width: 150px;
+    height: 150px;
+    margin: 0 10px;
+    border-radius: 10px;
+}
+
+#scoreDisplay {
+    margin-top: 20px;
+    font-size: 1.2em;
+}
+
+h3 {
+    color: red;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Food and Drink Pairing Game</h1>
+        <div class="input-section">
+            <label for="playerName">Enter your name:</label>
+            <input type="text" id="playerName" placeholder="Your Name">
+            <button id="startGame">Start Game</button>
+            <h2>Hello, for this game you have only 4 attepmts to do it so choose wisly!</h2>
+            <h3> The goal of this game is to make the perfect pairing between the drink and food to gain a higher score good luck</h3>
+        </div>
+        <div class="game-section" style="display: none;">
+            <!-- Food Options -->
+            <h2>Choose a Food:</h2>
+            <div id="foodOptions"></div>
+            <!-- Drink Options -->
+            <h2>Choose a Drink:</h2>
+            <div id="drinkOptions"></div>
+            <!-- Pairing Button -->
+            <button id="pairButton">Pair Selection</button>
+            <!-- Paired Items Display -->
+            <div id="pairedItems"></div>
+            <!-- Score Display -->
+            <div id="scoreDisplay">Score: <span id="score">0</span></div>
+            <!-- Attempts Remaining -->
+            <div id="attemptsRemaining"></div>
+        </div>
+    </div>
+
+    <script>
+        const foodOptions = [
+            { name: 'Pizza', image: './596343.jpg' },
+            { name: 'Burger', image: './OIP.jpg' },
+            { name: 'Salad', image: './OIP (1).jpg' },
+            { name: 'pasta', image: './R.jpg' },
+            { name: 'soup', image: './R (1).jpg' },
+            { name: 'steak', image: './OIP (2).jpg' }
+            // Add more food options here
+        ];
+
+        const drinkOptions = [
+            { name: 'Soda', image: './Kinza-Lemon-185-ml-x-30.jpg' },
+            { name: 'Milkshake', image: './R (2).jpg' },
+            { name: 'Water', image: './83568193-2418-40f0-8367-4fd80481e2f8_1.fc5284020d9e9b9bcd45d777a9e62bb5.webp' },
+            { name: 'juice', image: './a25cefa4-3b7d-4e9f-bc90-e462897aafd2_1.25d60aef19ad09e801dc459a7297a76f.webp' },
+            { name: 'sparkling water', image: './OIP (3).jpg' }
+            // Add more drink options here
+        ];
+
+        // Variables to track user selection, score, and attempts
+        let playerName = '';
+        let selectedFood = null;
+        let selectedDrink = null;
+        let score = 0;
+        let attemptsRemaining = 4;
+
+        // Function to start the game
+        function startGame() {
+            playerName = document.getElementById('playerName').value;
+            document.querySelector('.input-section').style.display = 'none';
+            document.querySelector('.game-section').style.display = 'block';
+            displayOptions('foodOptions', foodOptions);
+            displayOptions('drinkOptions', drinkOptions);
+            updateAttemptsRemaining();
+        }
+
+        // Function to display food and drink options
+        function displayOptions(containerId, options) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('option');
+                optionElement.innerHTML = `<img src="${option.image}" alt="${option.name}">`;
+                optionElement.addEventListener('click', () => selectOption(option, containerId));
+                container.appendChild(optionElement);
+            });
+        }
+
+        // Function to handle option selection
+        function selectOption(option, containerId) {
+            if (containerId === 'foodOptions') {
+                selectedFood = option;
+            } else {
+                selectedDrink = option;
+            }
+            document.querySelectorAll('.option').forEach(element => {
+                element.classList.remove('selected');
+            });
+            event.target.closest('.option').classList.add('selected');
+        }
+
+        // Function to pair selected food and drink
+        function pairSelection() {
+            if (!selectedFood || !selectedDrink) {
+                alert('Please choose both a food and a drink before pairing.');
+                return;
+            }
+            const pairedItemsContainer = document.getElementById('pairedItems');
+            const foodImage = `<img src="${selectedFood.image}" alt="${selectedFood.name}">`;
+            const drinkImage = `<img src="${selectedDrink.image}" alt="${selectedDrink.name}">`;
+            pairedItemsContainer.innerHTML = `${foodImage} + ${drinkImage}`;
+            const pairScore = calculateScore(selectedFood, selectedDrink);
+            score += pairScore;
+            document.getElementById('score').textContent = score;
+            // Generate new set of options
+            generateNewOptions();
+            // Update attempts remaining
+            attemptsRemaining--;
+            updateAttemptsRemaining();
+            // Check if attempts are exhausted
+            if (attemptsRemaining === 0) {
+                alert('You have finished your tries!');
+                document.getElementById('pairButton').disabled = true;
+            }
+        }
+
+        // Function to calculate the score based on the pairing
+        function calculateScore(food, drink) {
+            let pairScore = 0;
+
+            // Custom scoring logic based on perfect matches
+            if (
+                (food.name === 'Pizza' && drink.name === 'Soda') ||
+                (food.name === 'Pizza' && drink.name === 'juice') ||
+                (food.name === 'Burger' && drink.name === 'Milkshake') ||
+                (food.name === 'Salad' && drink.name === 'Water')||
+                (food.name === 'pasta' && drink.name === 'soda') ||
+                (food.name === 'soup' && drink.name === 'water') ||
+                (food.name === 'steak' && drink.name === 'Soda' )||
+                (food.name === 'steak' && drink.name === 'juice' )
+            ) {
+                pairScore = 20; // Perfect match
+            } else {
+                pairScore = 5; // Default score for non-perfect matches
+            }
+
+            return pairScore;
+        }
+
+        // Function to generate a new set of food and drink options
+        function generateNewOptions() {
+            // Shuffle the food and drink options
+            shuffleArray(foodOptions);
+            shuffleArray(drinkOptions);
+            // Display the new options
+            displayOptions('foodOptions', foodOptions);
+            displayOptions('drinkOptions', drinkOptions);
+        }
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Function to update the display of attempts remaining
+        function updateAttemptsRemaining() {
+            document.getElementById('attemptsRemaining').textContent = `Attempts remaining: ${attemptsRemaining}`;
+        }
+
+        // Event listeners
+        document.getElementById('startGame').addEventListener('click', startGame);
+        document.getElementById('pairButton').addEventListener('click', pairSelection);
+    </script>
+</body>
+</html>
